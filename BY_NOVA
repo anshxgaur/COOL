@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Protocol: AADITRI // Executed by NOVA</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Cinzel:wght@400;700&family=Great+Vibes&family=Montserrat:wght@200;400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        /* -----------------------------------------------------------
+           1. CORE VARIABLES & RESET
+           ----------------------------------------------------------- */
+        :root {
+            --bg-deep: #000000;
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --neon-gold: #ffd700;
+            --valentine-red: #ff2d55;
+            --nova-green: #0aff0a;
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: white;
+            font-family: 'Montserrat', sans-serif;
+            height: 100vh;
+            width: 100vw;
+            cursor: crosshair;
+        }
+
+        /* -----------------------------------------------------------
+           2. LAYOUT & LAYERS
+           ----------------------------------------------------------- */
+        .full-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .interactive-layer { pointer-events: auto; }
+
+        canvas { position: fixed; top: 0; left: 0; z-index: 1; }
+
+        /* -----------------------------------------------------------
+           3. THE "NOVA" TERMINAL (LOADER)
+           ----------------------------------------------------------- */
+        #terminal-layer {
+            background: black;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 50px;
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--nova-green);
+            text-shadow: 0 0 5px var(--nova-green);
+        }
+
+        .terminal-line { margin-bottom: 5px; opacity: 0; }
+        .blink { animation: blinker 0.1s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0; } }
+
+        /* -----------------------------------------------------------
+           4. SCENE 1: THE BIRTHDAY CARD
+           ----------------------------------------------------------- */
+        #scene-birthday {
+            opacity: 0; visibility: hidden; z-index: 50; perspective: 1200px;
+        }
+
+        .holo-card {
+            width: 500px; max-width: 90vw;
+            padding: 60px 40px;
+            background: rgba(10, 10, 30, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.1), inset 0 0 20px rgba(0, 243, 255, 0.05);
+            border-radius: 20px;
+            text-align: center;
+            transform-style: preserve-3d;
+        }
+
+        .glitch-header {
+            font-family: 'Orbitron', sans-serif; font-size: 3.5rem; font-weight: 900;
+            color: white;
+            text-shadow: 3px 3px 0px var(--neon-blue);
+            margin-bottom: 10px;
+        }
+
+        .script-name {
+            font-family: 'Great Vibes', cursive; font-size: 5rem;
+            background: linear-gradient(to right, #fff, var(--neon-blue));
+            -webkit-background-clip: text; color: transparent;
+            margin: 20px 0; filter: drop-shadow(0 0 10px var(--neon-blue));
+        }
+
+        .card-text {
+            font-size: 1.1rem; color: #ccc; line-height: 1.6; margin-bottom: 40px;
+        }
+
+        /* -----------------------------------------------------------
+           5. SCENE 2: THE FINALE (Updated)
+           ----------------------------------------------------------- */
+        #scene-finale {
+            opacity: 0; visibility: hidden; z-index: 50;
+        }
+
+        .finale-container { text-align: center; color: white; }
+
+        .finale-header {
+            font-family: 'Cinzel', serif; font-size: 5rem;
+            color: var(--neon-gold);
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+            margin-bottom: 1rem;
+            line-height: 1;
+        }
+
+        .crown-icon {
+            font-size: 6rem; margin-bottom: 1rem; display: inline-block;
+            filter: drop-shadow(0 0 30px var(--neon-gold));
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+
+        /* -----------------------------------------------------------
+           6. UI BUTTONS
+           ----------------------------------------------------------- */
+        .cyber-btn {
+            background: transparent; border: 1px solid var(--neon-blue);
+            color: var(--neon-blue); padding: 15px 40px;
+            font-family: 'Orbitron', sans-serif; font-size: 1rem; letter-spacing: 2px;
+            cursor: pointer; position: relative; overflow: hidden; transition: 0.3s;
+            text-transform: uppercase;
+        }
+        .cyber-btn:hover { background: var(--neon-blue); color: black; box-shadow: 0 0 30px var(--neon-blue); }
+
+        .cyber-btn.gold { border-color: var(--neon-gold); color: var(--neon-gold); }
+        .cyber-btn.gold:hover { background: var(--neon-gold); color: black; box-shadow: 0 0 30px var(--neon-gold); }
+
+        /* -----------------------------------------------------------
+           7. FOOTER
+           ----------------------------------------------------------- */
+        .nova-sig {
+            position: fixed; bottom: 20px; right: 30px;
+            font-family: 'Share Tech Mono', monospace; font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.3); z-index: 1000; letter-spacing: 2px; opacity: 0;
+        }
+        .nova-sig span { color: var(--neon-blue); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <canvas id="main-canvas"></canvas>
+
+    <div id="terminal-layer" class="full-screen">
+        <div id="terminal-cursor" class="blink">_</div>
+    </div>
+
+    <div id="scene-birthday" class="full-screen interactive-layer">
+        <div class="holo-card" id="bday-card">
+            <div class="glitch-header">LEVEL UP</div>
+            <div class="script-name">Aaditri</div>
+            <p class="card-text">
+                Protocol "Celebration" initiated.<br>
+                Scanning database for joy... <br>
+                Result: 100% Magic Detected.
+            </p>
+            <button class="cyber-btn" onclick="nextPhase()">Decrypt Next Level</button>
+        </div>
+    </div>
+
+    <div id="scene-finale" class="full-screen interactive-layer">
+        <div class="finale-container">
+            <div class="crown-icon">🫡🫡</div>
+            <h1 class="finale-header">Happy Birthday<br><span id="scramble-name">AADITRI</span></h1>
+            <p style="font-size: 1.5rem; letter-spacing: 1px; margin-bottom: 30px; color: #ddd;">
+                Wishing you a year written in the stars.
+            </p>
+            <button class="cyber-btn gold" onclick="grandFinale()">Launch Fireworks</button>
+        </div>
+    </div>
+
+    <div class="nova-sig" id="nova-sig">
+        SYSTEM ARCHITECT: <span>NOVA</span> // STATUS: PARTY MODE
+    </div>
+
+    <script>
+        /* =================================================================
+           ADVANCED GRAPHICS ENGINE (The "200 Lines" of logic)
+           Contains: Matrix Rain, Stars, Shockwaves, Heart-Fireworks
+           ================================================================= */
+        const canvas = document.getElementById('main-canvas');
+        const ctx = canvas.getContext('2d');
+        let width = window.innerWidth;
+        let height = window.innerHeight;
+        
+        let systemState = 'TERMINAL'; // TERMINAL -> BIRTHDAY -> TRANSITION -> FINALE
+        
+        // --- RESIZE HANDLER ---
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            initMatrix(); // Reset matrix on resize
+        });
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+
+        // --- UTILS ---
+        const random = (min, max) => Math.random() * (max - min) + min;
+        const colorPalettes = ['#ff00ff', '#00f3ff', '#ffd700', '#ff2d55'];
+
+        // =========================================================
+        // MODULE 1: MATRIX RAIN EFFECT (For Terminal Phase)
+        // =========================================================
+        let matrixColumns = [];
+        const matrixFontSize = 14;
+        
+        function initMatrix() {
+            const columns = Math.floor(width / matrixFontSize);
+            matrixColumns = Array(columns).fill(1);
+        }
+        initMatrix();
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; // Fade out trail
+            ctx.fillRect(0, 0, width, height);
+            
+            ctx.fillStyle = '#0aff0a'; // Matrix Green
+            ctx.font = matrixFontSize + 'px monospace';
+            
+            for (let i = 0; i < matrixColumns.length; i++) {
+                // Random Katakana + Latin characters
+                const char = String.fromCharCode(0x30A0 + Math.random() * 96);
+                const x = i * matrixFontSize;
+                const y = matrixColumns[i] * matrixFontSize;
+                
+                // Draw lighter character at the lead
+                ctx.globalAlpha = 1;
+                ctx.fillText(char, x, y);
+                
+                // Reset drop if off screen or random
+                if (y > height && Math.random() > 0.975) {
+                    matrixColumns[i] = 0;
+                }
+                matrixColumns[i]++;
+            }
+        }
+
+        // =========================================================
+        // MODULE 2: SPACE & SHOCKWAVE PHYSICS (For Birthday Phase)
+        // =========================================================
+        let stars = [];
+        let shockwaves = [];
+
+        class Star {
+            constructor() {
+                this.x = random(0, width);
+                this.y = random(0, height);
+                this.z = random(0.5, 3);
+                this.alpha = random(0.1, 1);
+                this.baseAlpha = this.alpha;
+            }
+            update(speedMult = 1) {
+                // Parallax movement
+                this.y -= (0.2 * this.z) * speedMult;
+                if(this.y < 0) {
+                    this.y = height;
+                    this.x = random(0, width);
+                }
+                // Twinkle
+                if(Math.random() < 0.01) this.alpha = Math.random();
+            }
+            draw() {
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.alpha})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.z * 1, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        for(let i=0; i<400; i++) stars.push(new Star());
+
+        class Shockwave {
+            constructor(x, y) {
+                this.x = x; this.y = y;
+                this.radius = 1;
+                this.maxRadius = 300;
+                this.alpha = 1;
+                this.speed = 5;
+            }
+            update() {
+                this.radius += this.speed;
+                this.alpha -= 0.02;
+            }
+            draw() {
+                if(this.alpha <= 0) return;
+                ctx.strokeStyle = `rgba(255, 255, 255, ${this.alpha * 0.5})`;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2);
+                ctx.stroke();
+            }
+        }
+
+        // =========================================================
+        // MODULE 3: ADVANCED FIREWORKS (Heart Shapes & Trails)
+        // =========================================================
+        let fireworks = [];
+        let particles = [];
+
+        class FireworkParticle {
+            constructor(x, y, color, type = 'normal') {
+                this.x = x; this.y = y; this.color = color;
+                this.type = type;
+                
+                // Physics
+                const velocity = random(2, 6);
+                let angle = random(0, Math.PI * 2);
+
+                if (type === 'heart') {
+                    // Heart equation distribution
+                    const t = random(0, Math.PI * 2);
+                    const force = random(1, 4);
+                    // Parametric Heart: x = 16sin^3(t), y = 13cos(t)-5cos(2t)-2cos(3t)-cos(4t)
+                    const hx = 16 * Math.pow(Math.sin(t), 3);
+                    const hy = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+                    
+                    // Normalize and apply velocity
+                    this.vx = (hx / 10) * random(0.8, 1.2);
+                    this.vy = (hy / 10) * random(0.8, 1.2);
+                    this.friction = 0.96;
+                } else {
+                    this.vx = Math.cos(angle) * velocity;
+                    this.vy = Math.sin(angle) * velocity;
+                    this.friction = 0.95;
+                }
+
+                this.life = 100;
+                this.gravity = 0.1;
+                this.alpha = 1;
+            }
+
+            update() {
+                this.vx *= this.friction;
+                this.vy *= this.friction;
+                this.vy += this.gravity;
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= 1;
+                this.alpha = this.life / 100;
+            }
+
+            draw() {
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function createExplosion(x, y, type='normal') {
+            // Add shockwave
+            shockwaves.push(new Shockwave(x, y));
+            
+            // Add particles
+            const count = type === 'heart' ? 60 : 40;
+            const color = colorPalettes[Math.floor(random(0, colorPalettes.length))];
+            
+            for(let i=0; i<count; i++) {
+                particles.push(new FireworkParticle(x, y, color, type));
+            }
+        }
+
+        // =========================================================
+        // MAIN RENDER LOOP (The Heart of the Engine)
+        // =========================================================
+        function animate() {
+            // 1. TERMINAL PHASE: Matrix Rain
+            if(systemState === 'TERMINAL') {
+                drawMatrix();
+            } 
+            // 2. SPACE PHASES: Stars + Fireworks
+            else {
+                // Clear with trail
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                ctx.fillRect(0, 0, width, height);
+
+                // Draw Stars
+                const warp = systemState === 'TRANSITION';
+                stars.forEach(star => {
+                    star.update(warp ? 50 : 1);
+                    star.draw();
+                });
+
+                // Draw Shockwaves
+                shockwaves.forEach((sw, i) => {
+                    sw.update();
+                    sw.draw();
+                    if(sw.alpha <= 0) shockwaves.splice(i, 1);
+                });
+
+                // Draw Particles
+                particles.forEach((p, i) => {
+                    p.update();
+                    p.draw();
+                    if(p.life <= 0) particles.splice(i, 1);
+                });
+
+                // Random Fireworks in Background for Celebration
+                if(systemState === 'FINALE' && Math.random() < 0.05) {
+                    createExplosion(
+                        random(width * 0.1, width * 0.9), 
+                        random(height * 0.1, height * 0.5),
+                        Math.random() > 0.7 ? 'heart' : 'normal'
+                    );
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+        animate(); // Start Engine
+
+        /* =================================================================
+           LOGIC: TIMELINE & INTERACTION
+           ================================================================= */
+        
+        // --- 1. TERMINAL TEXT SEQUENCE ---
+        const terminalText = [
+            "INITIALIZING NOVA PROTOCOL...",
+            "CONNECTING TO SATELLITE...",
+            "DECRYPTING SECURE FILES...",
+            "TARGET: AADITRI",
+            "STATUS: LEGENDARY",
+            "LOADING BIRTHDAY ASSETS...",
+            "LAUNCHING INTERFACE..."
+        ];
+
+        async function runTerminal() {
+            const container = document.getElementById('terminal-layer');
+            const cursor = document.getElementById('terminal-cursor');
+            
+            for(let line of terminalText) {
+                const div = document.createElement('div');
+                div.className = 'terminal-line';
+                div.innerText = "> " + line;
+                container.insertBefore(div, cursor);
+                
+                gsap.to(div, { opacity: 1, duration: 0.1 });
+                await new Promise(r => setTimeout(r, random(300, 600)));
+            }
+
+            // Glitch Transition
+            gsap.to("#terminal-layer", {
+                duration: 0.5, opacity: 0, scale: 1.1, filter: "blur(10px)",
+                onComplete: () => {
+                    document.getElementById('terminal-layer').style.display = 'none';
+                    startBirthdayScene();
+                }
+            });
+        }
+
+        // --- 2. BIRTHDAY SCENE ---
+        function startBirthdayScene() {
+            systemState = 'BIRTHDAY';
+            
+            gsap.set("#scene-birthday", { visibility: "visible", opacity: 1 });
+            gsap.from("#bday-card", { 
+                y: 500, rotationX: 45, opacity: 0, duration: 1.5, ease: "power4.out" 
+            });
+            gsap.from(".glitch-header", { 
+                text: "#######", duration: 1, ease: "none", delay: 0.5 
+            });
+            gsap.from(".script-name", { scale: 0, duration: 0.5, ease: "back.out", delay: 1 });
+        }
+
+        // --- 3. TRANSITION LOGIC ---
+        function nextPhase() {
+            // Fly out
+            gsap.to("#bday-card", {
+                y: -1000, rotation: random(-20, 20), duration: 1, ease: "power2.in"
+            });
+
+            systemState = 'TRANSITION'; // Triggers Warp Speed in Canvas
+
+            // Interstitial Text
+            const msg = document.createElement('div');
+            Object.assign(msg.style, {
+                position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                color: 'white', fontSize: '2rem', textAlign: 'center', fontFamily: 'Orbitron'
+            });
+            msg.innerHTML = "PROTOCOL: <span style='color:#ffd700'>ROYALTY</span>";
+            document.body.appendChild(msg);
+
+            gsap.fromTo(msg, { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1.2, duration: 1.5, yoyo: true, repeat: 1 });
+
+            setTimeout(() => {
+                msg.remove();
+                startFinaleScene();
+            }, 3000);
+        }
+
+        // --- 4. FINALE SCENE (Happy Birthday Aaditri) ---
+        function startFinaleScene() {
+            systemState = 'FINALE';
+            document.body.style.transition = "background 2s";
+            document.body.style.background = "radial-gradient(circle, #1a0b00 0%, #000000 100%)"; // Gold/Dark theme
+
+            gsap.set("#scene-finale", { visibility: "visible", opacity: 1 });
+            gsap.from(".finale-header", { scale: 0, duration: 1.5, ease: "elastic.out(1, 0.3)" });
+            gsap.from(".crown-icon", { y: -100, opacity: 0, duration: 1 });
+            
+            // Name Scramble Effect
+            gsap.to("#scramble-name", { 
+                duration: 2, 
+                text: { value: "AADITRI", delimiter: "" }, 
+                ease: "none"
+            });
+        }
+
+        // --- 5. GRAND FINALE ACTION ---
+        function grandFinale() {
+            // Massive Confetti
+            var duration = 5000;
+            var end = Date.now() + duration;
+
+            (function frame() {
+                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#ffd700', '#ffffff'] });
+                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#00f3ff', '#ffffff'] });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+
+            // Reveal Signature
+            gsap.to("#nova-sig", { opacity: 1, duration: 2, delay: 1 });
+            
+            // Trigger 10 rapid explosions
+            for(let i=0; i<10; i++) {
+                setTimeout(() => {
+                    createExplosion(width/2 + random(-200, 200), height/2 + random(-200, 200), 'heart');
+                }, i * 300);
+            }
+        }
+
+        // --- STARTUP ---
+        window.onload = runTerminal;
+
+        // --- 3D TILT ---
+        document.addEventListener('mousemove', (e) => {
+            if(systemState !== 'BIRTHDAY') return;
+            const card = document.getElementById('bday-card');
+            if(card) {
+                const xAxis = (window.innerWidth / 2 - e.pageX) / 20;
+                const yAxis = (window.innerHeight / 2 - e.pageY) / 20;
+                card.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+            }
+        });
+
+    </script>
+</body>
+</html>
